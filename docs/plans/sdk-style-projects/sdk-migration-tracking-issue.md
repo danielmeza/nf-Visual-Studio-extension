@@ -1,10 +1,14 @@
 <!--
 Suggested title:
-  [Proposal] Path toward an SDK-style MSBuild project system (debugger-gated)
+  [Proposal] Path toward an SDK-style MSBuild project system (debugger gate proven solvable)
 
 Suggested labels: enhancement, area-Config-and-Build,
                   area-Infrastructure-and-Organization, non trivial,
-                  blocked, FEEDBACK REQUESTED
+                  FEEDBACK REQUESTED
+
+A condensed, paste-ready version formatted to the Home repo "Feature request" issue
+form (Description / How to solve / Alternatives / Additional context) is in
+sdk-migration-home-issue.md.
 -->
 
 # Path toward an SDK-style MSBuild project system
@@ -14,14 +18,27 @@ Suggested labels: enhancement, area-Config-and-Build,
 This issue tracks the overall effort to move .NET **nanoFramework** from the
 flavored `.nfproj` project system toward an **SDK-style** MSBuild project system.
 
-It is written with eyes open about the **known blocker** (the Visual Studio
-debugger — see below): a full move to SDK-style is **not possible today**. The
-intent of this issue is therefore to (a) agree the destination, (b) line up the
-groundwork that is *not* blocked and can start now, and (c) track the debugger
-dependency that gates the rest.
+The **Visual Studio debugger that was thought to gate this is now proven solvable** — a
+proof-of-concept deploys and debugs (F5 + source breakpoints) an SDK-style project on
+real hardware with the existing AD7 engine **unchanged** (see the demo below and the
+decomposition that follows). The intent of this issue is therefore to (a) agree the
+destination, (b) land the now-proven SDK + debugging path, and (c) sequence the
+groundwork (republish packages against `netnano1.0`, fix the import collision, fleet
+migration).
 
-This is a **tracking/epic issue**. Detailed design docs will be linked in
-follow-up comments; this stays at the plan level.
+This is a **tracking/epic issue**. The detailed design docs and the POC are linked
+below; this stays at the plan level.
+
+## Demo
+
+SDK-style project deploying and **F5 debugging with breakpoints hitting on a real
+ESP32_S3_OCTAL** — the gate that was thought to block SDK-style:
+
+<!-- ⬇️ In the GitHub issue editor, drag-and-drop the recorded video right below this
+     line. GitHub uploads it and inserts a https://github.com/user-attachments/assets/…
+     URL that renders as an inline player. Then delete this comment and the placeholder. -->
+
+_➡️ video to be attached here_
 
 ## The VS-debugger blocker — RESOLVED by the POC ✅ (decomposed, then confirmed on hardware)
 
