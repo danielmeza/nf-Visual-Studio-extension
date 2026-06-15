@@ -83,11 +83,9 @@ owns the chain) → migrate the fleet leaf-first → deprecate (not delete) the 
 SDK-style project deploying and **F5 debugging with breakpoints hitting on a real
 ESP32_S3_OCTAL** (the gate that was thought to block SDK-style):
 
-<!-- ⬇️ In the GitHub issue editor, drag-and-drop the recorded video right below this line.
-     GitHub uploads it and inserts a https://github.com/user-attachments/assets/… URL that
-     renders as an inline player. Then delete this comment and the placeholder line. -->
+[![Watch the demo on YouTube](https://img.youtube.com/vi/9qvXsgXCrjM/hqdefault.jpg)](https://youtu.be/9qvXsgXCrjM)
 
-_➡️ video to be attached here_
+▶️ https://youtu.be/9qvXsgXCrjM
 
 ### Design + decision record
 
