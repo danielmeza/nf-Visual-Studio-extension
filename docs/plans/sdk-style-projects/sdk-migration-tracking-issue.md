@@ -59,7 +59,7 @@ real ESP32_S3_OCTAL the SDK-style sample loads in VS, deploys via F5, and a brea
 **binds and hits**. Four issues were found and fixed en route (F5-console, deploy
 version-mismatch → checksum pre-check, breakpoints → Windows/full PDB, dev-only legacy
 `.nfproj` load) — see
-[poc-sdk-style/DEBUGGING-LOG.md](../../../poc-sdk-style/DEBUGGING-LOG.md).
+[poc-sdk-style/DEBUGGING-LOG.md](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/poc-sdk-style/DEBUGGING-LOG.md).
 
 What's reachable regardless of the gate:
 
@@ -168,7 +168,7 @@ and projects still use `packages.config`. Closing that gap is unblocked work
 - [ ] Packages republished targeting `netnano1.0`
 - [x] NFProjectSystem targets import fixed for SDK-style/imported contexts — POC SDK composes over `Microsoft.NET.Sdk` and owns the import chain
 - [x] Experimental CLI build/pack/test validated — POC `Blink` builds `.pe`/`.pdbx`, cross-platform
-- [x] **Gate:** VS debugger works on SDK-style projects — **PROVEN on real hardware** (deploy + F5 + source breakpoints); see [poc-sdk-style/DEBUGGING-LOG.md](../../../poc-sdk-style/DEBUGGING-LOG.md)
+- [x] **Gate:** VS debugger works on SDK-style projects — **PROVEN on real hardware** (deploy + F5 + source breakpoints); see [poc-sdk-style/DEBUGGING-LOG.md](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/poc-sdk-style/DEBUGGING-LOG.md)
 - [ ] SDK-style supported as an option; preview `nanoFramework.Sdk` published
 - [ ] Fleet migration (leaf-first)
 - [ ] Legacy project system deprecated
