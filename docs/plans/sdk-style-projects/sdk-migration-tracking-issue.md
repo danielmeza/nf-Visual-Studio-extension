@@ -173,6 +173,29 @@ and projects still use `packages.config`. Closing that gap is unblocked work
 - [ ] Fleet migration (leaf-first)
 - [ ] Legacy project system deprecated
 
+## POC artifacts — permalinks
+
+The executed POC lives on branch `poc/sdk-style-debugging`
+([danielmeza/nf-Visual-Studio-extension](https://github.com/danielmeza/nf-Visual-Studio-extension)).
+Permalinks pinned to commit
+[`b8c2ede`](https://github.com/danielmeza/nf-Visual-Studio-extension/commit/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333):
+
+**The SDK + sample (what a project author writes):**
+- [`poc-sdk-style.sln`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/poc-sdk-style/poc-sdk-style.sln) — solution with the SDK-style and legacy projects side by side
+- [`Sdk.props`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/poc-sdk-style/nanoFramework.Sdk/Sdk/Sdk.props) · [`Sdk.targets`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/poc-sdk-style/nanoFramework.Sdk/Sdk/Sdk.targets) · [`nanoFramework.Mdp.targets`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/poc-sdk-style/nanoFramework.Sdk/Sdk/nanoFramework.Mdp.targets) — the `nanoFramework.Sdk` (composition + MDP re-host; `Sdk.props` carries the `DebugType=full` breakpoint fix)
+- [`samples/Blink/Blink.csproj`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/poc-sdk-style/samples/Blink/Blink.csproj) — the ~6-line SDK-style app
+- [`dev-install-legacy-targets.ps1`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/poc-sdk-style/dev-install-legacy-targets.ps1) — dev helper so a legacy `.nfproj` loads in the experimental instance
+
+**Extension changes (the gate fixes):**
+- [`DeployProvider.cs`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/vs-extension.shared/DeployProvider/DeployProvider.cs) — checksum-only deploy pre-check + deploy follows the selected device
+- [`Ad7CorDebugEngineBinding.cs`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/vs-extension.shared/DebugLauncher/Ad7CorDebugEngineBinding.cs) — per-device port via the engine-binding seam
+- [`PdbxFile.cs`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/vs-extension.shared/CorDebug/PdbxFile.cs) · [`CorDebugBreakpoint.cs`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/vs-extension.shared/CorDebug/CorDebugBreakpoint.cs) · [`CorDebugFunction.cs`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/vs-extension.shared/CorDebug/CorDebugFunction.cs) · [`CorDebugCode.cs`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/vs-extension.shared/CorDebug/CorDebugCode.cs) — `[BP-DIAG]` breakpoint diagnostics (POC-grade)
+
+**Results & decision record:**
+- [`RESULTS.md`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/poc-sdk-style/RESULTS.md) — what's proven
+- [`DEBUGGING-LOG.md`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/poc-sdk-style/DEBUGGING-LOG.md) — every blocker hit and its fix (§1–§6) + dead ends
+- [`DEVICE-RUN-DROPDOWN.md`](https://github.com/danielmeza/nf-Visual-Studio-extension/blob/b8c2edeb1ff775e3f78ba74af9ed384d1ee5c333/poc-sdk-style/DEVICE-RUN-DROPDOWN.md) — multi-device Run-selection design
+
 ## References
 
 - Discussion: [#1635 — NFProjectSystem.CSharp.targets import failed in SDK Style project](https://github.com/orgs/nanoframework/discussions/1635)
