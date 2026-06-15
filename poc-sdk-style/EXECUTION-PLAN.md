@@ -4,15 +4,35 @@ How the POC's results get contributed upstream now that the official SDK repo ex
 Status of the POC itself: build + deploy + **F5/breakpoints proven on real hardware**
 (see [RESULTS.md](RESULTS.md), [DEBUGGING-LOG.md](DEBUGGING-LOG.md)).
 
-## Repos & local setup (ready)
+## Workspace & repos (all cloned; forks + upstreams wired)
 
-| Repo | Fork (origin) | Upstream | Local clone | Working branch |
-|---|---|---|---|---|
-| **SDK** | `danielmeza/nanoFramework.Sdk` | `nanoframework/nanoFramework.Sdk` | `D:\src\nnf\nanoFramework.Sdk` | `poc/vs-debugging-enablers` (off `move-to-sdk`) |
-| **Extension** | `danielmeza/nf-Visual-Studio-extension` | `nanoframework/nf-Visual-Studio-extension` | `D:\src\nnf\nf-Visual-Studio-extension` | `poc/sdk-style-debugging` |
+All clones live under `D:\src\nnf\`; each `origin` = a `danielmeza/*` fork, `upstream` =
+`nanoframework/*`. The `lib-*` fleet (doc 07) is intentionally **excluded** — later phase.
+
+| Repo | Role in the plan | Clone dir | Branch |
+|---|---|---|---|
+| **nanoFramework.NET.Sdk** | SDK contribution (A1–A4) | `nanoFramework.Sdk` | **`poc/vs-debugging-enablers`** (off `move-to-sdk`) |
+| **nf-Visual-Studio-extension** | extension fixes (B) | `nf-Visual-Studio-extension` | **`poc/sdk-style-debugging`** |
+| metadata-processor | MDP build task (A4, only if targeting v2) | `metadata-processor` | `main` |
+| CoreLibrary | corlib SDK-migration (special case) + validation | `nanoFramework-CoreLibrary` | `main` — fork keeps the **old** name; ~51 behind `upstream/CoreLibrary`, sync when tackling corlib |
+| Samples | end-to-end validation (deploy/debug a real app) | `Samples` | `main` |
+| nf-VSCodeExtension | consumer simplification (later phase) | `nf-VSCodeExtension` | `main` |
 
 Baseline: the SDK's `nanoFramework.Tools.BuildTasks` builds clean (0 errors; only an
 NU1903 advisory on `Microsoft.Build.Utilities.Core`).
+
+## Organization — follow the POC's layout
+
+Carry the POC's modular, self-documenting layout into the contribution rather than growing
+the official monolithic `Sdk.targets`:
+- **`Sdk/Rules/`** folder for XAML rules (e.g. `NanoDebugger.xaml`) — as in the POC.
+- Keep **debugging / MDP concerns in their own include(s)** (the POC split out
+  `nanoFramework.Mdp.targets`) so the additions stay reviewable + separable, with clear
+  sectioning and comments.
+- A self-contained **`test/`** sample that exercises build → deploy → F5 (mirrors the POC's
+  `samples/Blink`).
+- Don't restructure the maintainers' existing files beyond what each change needs; offer the
+  fuller split as a follow-up only if they want it.
 
 ## Naming — align to the official name
 
