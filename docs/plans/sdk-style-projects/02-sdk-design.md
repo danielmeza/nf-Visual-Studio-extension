@@ -9,11 +9,14 @@ module compilation, relocatable native linking, shipping native binaries inside
 NuGet packages, and OTA are **out of scope** — they belong to a separate, later
 effort and are not part of this SDK.
 
-**Blocker note.** A full move to SDK-style is gated on the Visual Studio debugger
-(see doc 09 and discussion
-[#1635](https://github.com/orgs/nanoframework/discussions/1635)). The design here
-is what the destination looks like; the build/pack/test parts are reachable now,
-while VS debugging on SDK-style projects depends on the VS debugger story.
+**Status note.** The VS-debugger concern that was thought to gate this is **resolved** —
+the POC proved F5 + source breakpoints on an SDK-style project on real hardware (doc 09
+§9.5; discussion [#1635](https://github.com/orgs/nanoframework/discussions/1635)). And the
+MSBuild-SDK destination described here now exists as an official repo,
+[`nanoframework/nanoFramework.Sdk`](https://github.com/nanoframework/nanoFramework.Sdk)
+(WIP on `move-to-sdk`), which packages the build pipeline as a NuGet SDK. The build/pack/
+test design below is what that SDK implements; VS debugging on SDK-style projects is the
+POC's contribution (capability injection + the debugging fixes).
 
 ---
 

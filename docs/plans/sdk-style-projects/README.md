@@ -19,6 +19,15 @@ map.
 > for the multi-device selection design. VS Code analysis:
 > **[vscode-extension-impact.md](vscode-extension-impact.md)**.
 
+> **The official `nanoFramework.Sdk` repo now exists** —
+> **[nanoframework/nanoFramework.Sdk](https://github.com/nanoframework/nanoFramework.Sdk)**
+> (branch `move-to-sdk`, WIP, not yet released). It's the MSBuild-SDK destination this set
+> describes: it packages the build pipeline (C#→MDP→PE→resources) as a NuGet-distributed
+> SDK, replacing the build infra bundled in the VSIX. That repo covers the **build** side;
+> the POC above proved the **debugging** side — so **debugging is no longer a blocker** and
+> the two converge. This spec set is now the design backdrop for that repo + the POC's
+> debugging fixes.
+
 ## The blocker — RESOLVED ✅
 
 The maintainer attributed the SDK-style block to the **Visual Studio debugger**

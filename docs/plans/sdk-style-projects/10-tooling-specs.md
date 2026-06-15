@@ -21,12 +21,13 @@ selection, toolchain/CoreRuntime packs, and OTA are out of scope.
 | C6 | `dotnet-nano` tool | .NET tool | New | deploy/flash/monitor verbs (doc 05) |
 | C7 | `dotnet new` templates | Template pkg | New | `nanoapp`/`nanolib` (§10.5) |
 | C8 | migration tool + CI template rewriter | Tool | New | fleet conversion (doc 07) |
-| C9 | VS CPS capability + XAML rules | VS extension | Modified | **gated on the debugger** (doc 09 §9.5) |
+| C9 | VS CPS capability + XAML rules | VS extension | Modified | **POC-proven** (doc 09 §9.5) — productize into the shipped extension |
 | C10 | `nanoFramework.Sdk.Corlib` variant | MSBuild SDK | New | mscorlib bootstrap (doc 02 §2.6) |
 | C11 | nanoFramework workload manifest | Workload pkg | New (later) | wraps SDK+templates (doc 02 §2.3 option C) |
 
-MVS (Phase 1) ships C1, C2, C3, C4, C7, C8. C5/C6 follow; C9 is gated behind the
-VS debugger; C10/C11 land later.
+MVS (Phase 1) ships C1, C2, C3, C4, C7, C8. C5/C6 follow; C9 is POC-proven (the VS
+debugger is no longer a gate — productize it next); C10/C11 land later. The MSBuild SDK
+(C1) now exists as [`nanoframework/nanoFramework.Sdk`](https://github.com/nanoframework/nanoFramework.Sdk).
 
 ## 10.2 `nanoFramework.Sdk` package structure
 

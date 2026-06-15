@@ -131,7 +131,7 @@ Two further realities the specs build on:
 | [03](03-project-file-migration.md) | Project File Migration |
 | [04](04-mdp-native-integration.md) | Metadata Processor (MDP) Integration |
 | [05](05-cli-experience.md) | CLI Experience (`dotnet build/deploy/new/watch`) |
-| [06](06-ide-integration.md) | Visual Studio & VS Code Integration (debugger-gated) |
+| [06](06-ide-integration.md) | Visual Studio & VS Code Integration (debugger gate cleared ✅) |
 | [07](07-library-migration.md) | Library Repository Migration (~100+ repos) |
 | [08](08-nuget-pipeline.md) | NuGet Pipeline (managed `pack`) |
 | [09](09-implementation-strategy.md) | Implementation Strategy & Phasing |
@@ -163,5 +163,9 @@ A minimal nanoFramework app is a single `.csproj`:
 
 `dotnet build` produces a `.pe` (+ `.pdbx`); `dotnet pack` emits a package with the
 managed assets under `lib/netnano1.0/`; `dotnet test` runs the unit tests. No VS
-extension is required to build, pack, or test. VS debugging of SDK-style projects
-remains on the legacy path until the debugger gate (doc 06, doc 09) lifts.
+extension is required to build, pack, or test. VS debugging of SDK-style projects is now
+**proven** (the POC: F5 + source breakpoints on real hardware — doc 06, doc 09 §9.5);
+productizing it in the shipped extension is the remaining step. The MSBuild SDK itself now
+exists as the official repo
+[`nanoframework/nanoFramework.Sdk`](https://github.com/nanoframework/nanoFramework.Sdk)
+(WIP on `move-to-sdk`).

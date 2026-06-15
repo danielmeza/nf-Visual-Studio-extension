@@ -13,11 +13,13 @@ are not part of any phase below.
 
 1. **Never flag-day the fleet.** Old `.nfproj` and the new SDK must build side by
    side for the whole transition.
-2. **The VS debugger is the gate.** A move to SDK-style as a *supported* format is
-   blocked on the Visual Studio debugger (the project flavor's debug/F5 path is
-   tied to the old project system — see §9.5 and
-   [#1635](https://github.com/orgs/nanoframework/discussions/1635)). Build, pack,
-   and test via the CLI are *not* blocked by this and can proceed.
+2. **The VS debugger was the gate — now cleared.** Moving to SDK-style was thought to
+   be blocked on the Visual Studio debugger; the POC **proved** F5 + source breakpoints
+   work on an SDK-style project on real hardware (§9.5;
+   [#1635](https://github.com/orgs/nanoframework/discussions/1635)). Build, pack, and
+   test via the CLI were never blocked. The MSBuild SDK now exists as
+   [`nanoframework/nanoFramework.Sdk`](https://github.com/nanoframework/nanoFramework.Sdk)
+   (WIP).
 3. **The TFM already exists.** `netnano1.0` is a recognized TFM (doc 02 §2.2). The
    only gap is that packages aren't published against it yet — unblocked work.
 
@@ -36,8 +38,9 @@ today's build via the CLI with none of the pain:
 
 **Explicitly out of MVS:**
 - Anything native or OTA (out of scope entirely).
-- **VS debugging on SDK-style projects** — blocked by the debugger gate (§9.5).
-  MVS targets the CLI and VS Code build; F5 debugging stays on legacy `.nfproj`.
+- **VS debugging on SDK-style projects** — proven by the POC (§9.5) but its
+  productization (folding the capability injection + debugging fixes into the shipped
+  extension) is a follow-on, not part of the MVS build SDK itself.
 
 MVS value: a `lib-*` repo can convert to a ~6-line `.csproj`, drop
 `packages.config`/`.nuspec`/the project-system path hack, and `dotnet
@@ -153,7 +156,7 @@ independently of those much larger pieces.
 
 | Risk | Likelihood | Mitigation |
 |------|-----------|-----------|
-| VS debugger gate doesn't lift (no VS support; rewrite too costly) | High | Ship all unblocked value in Phase 1 (CLI build/pack/test); keep VS debugging on legacy `.nfproj` indefinitely if needed |
+| ~~VS debugger gate doesn't lift~~ — **retired:** the POC cleared it (F5 + breakpoints on hardware, §9.5) | — | n/a; remaining work is productizing the POC fixes into the shipped extension |
 | `GenerateBinaryOutputTask` semantics subtly differ when re-hosted | Medium | Phase 0 byte-identical `.pe` exit gate |
 | `NFProjectSystem.CSharp.targets` double-import recurs | Medium | SDK owns the import chain (#1635/#1067) |
 | x64 task / nodeReuse regressions | Low–Med | Ship multi-arch task; SDK controls node reuse |

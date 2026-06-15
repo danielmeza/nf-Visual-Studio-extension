@@ -26,13 +26,13 @@ Today the VS extension carries build logic (deploy orchestration, parts of the
 project system). The destination is that **everything buildable lives in the SDK**
 and the extension keeps only what genuinely needs an IDE:
 
-| Capability | Today | Destination | Gated? |
+| Capability | Today | Destination | Was gated? |
 |-----------|-------|-------------|--------|
-| Project system / build | VS extension flavor + `NFProjectSystem.*` | **SDK** (`dotnet build`) | VS load: yes |
+| Project system / build | VS extension flavor + `NFProjectSystem.*` | **SDK** (`dotnet build`) — now [`nanoframework/nanoFramework.Sdk`](https://github.com/nanoframework/nanoFramework.Sdk) | VS load: was, now POC-proven |
 | Restore | VS + nuget | **SDK** (PackageReference) | no |
-| Deploy | VS extension button (own logic) | **SDK `Deploy` target**, extension invokes it | no (CLI); VS button: with debugger |
+| Deploy | VS extension button (own logic) | **SDK `Deploy` target**, extension invokes it | no (CLI); VS button: POC-proven |
 | Device Explorer | VS extension | VS extension (kept) | — |
-| Debugger | VS extension | VS extension (kept) | **the gate** |
+| Debugger | VS extension | VS extension (kept) | **was the gate — now cleared ✅** |
 | Property pages | VS extension flavor | CPS defaults + light nano page | with VS load |
 
 The extension's destination is **device explorer + debugger + a deploy button that

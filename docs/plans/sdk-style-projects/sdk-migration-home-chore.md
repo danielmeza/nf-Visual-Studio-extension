@@ -44,6 +44,16 @@ capability — not the engine. The intent of this epic is therefore to (a) agree
 destination, (b) land the now-proven SDK + debugging path, and (c) sequence the groundwork
 (republish packages against `netnano1.0`, fix the import collision, fleet migration).
 
+**The `nanoFramework.Sdk` repo now exists.** The MSBuild-SDK destination is no longer
+hypothetical — [`nanoframework/nanoFramework.Sdk`](https://github.com/nanoframework/nanoFramework.Sdk)
+(branch `move-to-sdk`, WIP, not yet released) packages the nanoFramework build pipeline
+(C# compile → MDP IL→PE → resource generation → binary output) as a NuGet-distributed
+MSBuild SDK, replacing the build infrastructure previously bundled in the VSIX. That repo
+covers the **build** side; this POC additionally proved the **debugging** side (F5 +
+source breakpoints in VS), so **debugging is no longer a blocker**. The two efforts
+combine into the full SDK-style experience once the POC's capability injection + debugging
+fixes land alongside the SDK.
+
 Companion public proposal (Feature request form): **nanoFramework/Home#1784**.
 
 ### Demo
@@ -155,7 +165,7 @@ debugger.
 
 ### Key open decisions
 
-- Where does `nanoFramework.Sdk` live (new repo vs. `nf-Visual-Studio-extension`) and how is it versioned/published?
+- **Resolved:** `nanoFramework.Sdk` lives in its own repo — [`nanoframework/nanoFramework.Sdk`](https://github.com/nanoframework/nanoFramework.Sdk) (WIP on `move-to-sdk`). Still open: versioning/publishing cadence and the first released version (README references `0.1.0`, not yet published).
 - Republish strategy for packages targeting `netnano1.0`.
 - Whether to support an interim `Microsoft.NET.Sdk` + imported-targets shape (as in #1635) vs. waiting for the clean `nanoFramework.Sdk`.
 
@@ -166,7 +176,7 @@ debugger.
 - `CoreLibrary` — first validation target (special case).
 - `Samples` — end-to-end validation.
 - `nf-VSCodeExtension` — consumer; simplifies once the SDK exists.
-- new `nanoFramework.Sdk` repo — **TBD**.
+- [`nanoframework/nanoFramework.Sdk`](https://github.com/nanoframework/nanoFramework.Sdk) — **the SDK itself, now created** (MSBuild SDK + build tasks; WIP on `move-to-sdk`, not yet released).
 - the `lib-*` fleet — later phase.
 
 ### Work / tracking checklist
@@ -174,9 +184,10 @@ debugger.
 - [x] NFProjectSystem targets import fixed for SDK-style/imported contexts — the POC SDK composes over `Microsoft.NET.Sdk` and owns the import chain
 - [x] Experimental CLI build/pack/test validated — POC `Blink` builds `.pe`/`.pdbx`, cross-platform
 - [x] **Gate:** VS debugger works on SDK-style projects — **PROVEN on real hardware** (deploy + F5 + source breakpoints)
-- [ ] Agree direction, the `nanoFramework.Sdk` repo home, and interim-shape policy
+- [x] `nanoFramework.Sdk` repo home decided — [`nanoframework/nanoFramework.Sdk`](https://github.com/nanoframework/nanoFramework.Sdk) created (WIP on `move-to-sdk`)
+- [ ] Land `nanoFramework.Sdk` v1 (versioning/publish cadence; first released version) and agree interim-shape policy
 - [ ] Packages republished targeting `netnano1.0`
-- [ ] Fold the POC fixes into the shipped extension (and strip the `[BP-DIAG]` diagnostics)
+- [ ] Fold the POC's debugging fixes (capability injection, `DebugType=full`, deploy checksum pre-check, F5 wiring) into `nanoFramework.Sdk` + the extension (strip the `[BP-DIAG]` diagnostics)
 - [ ] SDK-style supported as an option; preview `nanoFramework.Sdk` published
 - [ ] Fleet migration (leaf-first) of the `lib-*` repos
 - [ ] Legacy project system deprecated (kept supported during transition)
