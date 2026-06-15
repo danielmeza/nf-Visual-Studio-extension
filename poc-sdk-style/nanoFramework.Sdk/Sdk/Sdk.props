@@ -11,6 +11,22 @@
 -->
 <Project>
 
+  <!-- MUST precede the Microsoft.NET.Sdk import below: that SDK defaults
+       DebugType=portable when empty, so its default must be pre-empted here. nanoFramework
+       VS debugging resolves source<->IL by reading a *Windows/full* PDB ("Microsoft C/C++
+       MSF ..."); a portable PDB (BSJB) makes VS fail to map the line and fall back to a
+       function-ENTRY breakpoint that binds at IL 0, hits once at startup, and never on the
+       line (confirmed via [BP-DIAG] trace). Setting full here makes the SDK's '== empty'
+       default a no-op for Debug and lets the SDK derive all /debug args from full. Built in
+       VS (.NET Framework csc) full yields a Windows PDB; the legacy project system forces
+       DebugType=full for Debug for this same reason. Caveat: `dotnet build` (.NET Core csc)
+       emits portable even for full, but the CLI doesn't debug — so Debug=full is correct.
+       VS passes Configuration as a global property, so it's set here; Release/CLI fall
+       through to portable. -->
+  <PropertyGroup>
+    <DebugType Condition="'$(DebugType)' == '' and '$(Configuration)' == 'Debug'">full</DebugType>
+  </PropertyGroup>
+
   <!-- Inherit Roslyn, restore, default globs and pack plumbing from the .NET SDK. -->
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
@@ -35,7 +51,9 @@
     <!-- nano corlib lacks the BCL attributes the SDK auto-AssemblyInfo would emit. -->
     <GenerateAssemblyInfo Condition="'$(GenerateAssemblyInfo)' == ''">false</GenerateAssemblyInfo>
 
-    <!-- A portable PDB next to the IL assembly is what MDP turns into the .pdbx. -->
+    <!-- Debug is forced to a Windows/full PDB in the block ABOVE the Microsoft.NET.Sdk
+         import (it must pre-empt the SDK's portable default). This is the Release/fallback
+         default; the MDP turns whichever PDB into the .pdbx (CLR<->NanoCLR token + IL map). -->
     <DebugType Condition="'$(DebugType)' == ''">portable</DebugType>
     <DebugSymbols Condition="'$(DebugSymbols)' == ''">true</DebugSymbols>
 
@@ -59,9 +77,22 @@
     $(Pkg...) path property is generated for the NanoEmitPe target. We consume
     NONE of its assets (no transitive runtime/compile deps leak into the nano
     assembly) — we only want the task binary path.
+
+    The gate '$(NanoMdpTaskAssembly)' == '' is a pure USER override knob: when a
+    consumer points NanoMdpTaskAssembly at a task DLL directly (CI / local task
+    build), this PackageReference is skipped. It MUST NOT be set by any restored
+    value (see nanoFramework.Mdp.targets, which derives into the PRIVATE
+    _NanoMdpTaskAssembly instead) — otherwise this PackageReference would appear/
+    disappear across restores and Visual Studio reports "A NuGet restore loop
+    has been detected".
   -->
   <PropertyGroup>
-    <NanoMdpTaskPackageVersion Condition="'$(NanoMdpTaskPackageVersion)' == ''">3.0.100</NanoMdpTaskPackageVersion>
+    <!-- v2 (NFMRK2) Metadata Processor, published/unpatched. It stamps each assembly
+         reference with the MANAGED version (mscorlib -> 2.0.0.0), which is what the
+         on-device CLR linker resolves against and what the deployment image ships as
+         mscorlib.pe. (An earlier local patch that stamped the firmware NATIVE version
+         100.22.x was wrong — it made Blink ask for a version nothing provides.) -->
+    <NanoMdpTaskPackageVersion Condition="'$(NanoMdpTaskPackageVersion)' == ''">4.0.0-preview.94</NanoMdpTaskPackageVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(NanoEmitPe)' == 'true' and '$(NanoMdpTaskAssembly)' == ''">

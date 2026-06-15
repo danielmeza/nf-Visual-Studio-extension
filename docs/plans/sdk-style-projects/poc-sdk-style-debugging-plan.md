@@ -1,10 +1,12 @@
 # POC Plan — Unblock SDK-style debugging (A+C first), engine-swap ready
 
-> **Executed.** Build-side workstreams are done and verified — see
-> [poc-sdk-style/RESULTS.md](../../../poc-sdk-style/RESULTS.md) (artifacts under
-> [poc-sdk-style/](../../../poc-sdk-style/)). WS1/WS2/WS3 are proven/authored; WS4
-> (the F5 breakpoint) has a Layer A (headless, automatable) + Layer B (real VS)
-> runbook there. VS Code impact: [vscode-extension-impact.md](vscode-extension-impact.md).
+> **Executed — hypothesis CONFIRMED on real hardware. ✅** WS1/WS2/WS3 are
+> proven/authored and **WS4 (the gate) is met**: an SDK-style app deploys via F5 and
+> **source breakpoints bind and hit** on a physical ESP32_S3_OCTAL. See
+> [poc-sdk-style/RESULTS.md](../../../poc-sdk-style/RESULTS.md) and the full decision
+> record (every blocker hit + fix, §1–§6) in
+> [poc-sdk-style/DEBUGGING-LOG.md](../../../poc-sdk-style/DEBUGGING-LOG.md). VS Code
+> impact: [vscode-extension-impact.md](vscode-extension-impact.md).
 
 ## Objective
 
@@ -87,7 +89,7 @@ actual Concord engine implementation (we build the *seam* for it, not the engine
   `DebugPortSupplier.PortSupplierGuid` / `CorDebugProcess`; the AD7 binding is
   selected by config; the Concord stub compiles and is selectable.
 
-### WS4 — End-to-end validation (the gate)
+### WS4 — End-to-end validation (the gate) — ✅ PASSED
 - Author one sample SDK-style app; F5; set a breakpoint; confirm bind + hit +
   step + locals. Compare to the legacy `.nfproj`.
 - **Exit (pass):** breakpoint binds and hits on the SDK-style project with the AD7
@@ -95,6 +97,12 @@ actual Concord engine implementation (we build the *seam* for it, not the engine
 - **Exit (fail):** document the exact attach/notify failure point → **H refuted**
   at that seam; WS3 means the next step (Concord engine) is scoped without redoing
   WS1/WS2.
+- **RESULT — pass ✅:** on a real ESP32_S3_OCTAL, the SDK-style `Blink` deploys via F5
+  and a source breakpoint **binds and hits** with the AD7 binding unchanged → **H
+  confirmed**. Four fixes were required en route — F5-console (LaunchProfiles removed +
+  `DebuggerFlavor`), deploy version mismatch (checksum-only pre-check), breakpoints
+  (Debug must emit a **Windows/full** PDB), and dev-only legacy `.nfproj` load — see
+  [poc-sdk-style/DEBUGGING-LOG.md](../../../poc-sdk-style/DEBUGGING-LOG.md) §3–§6.
 
 ---
 
@@ -160,6 +168,9 @@ WS1 (SDK targets) ─┐
 WS3 (engine seam) ─┘   (parallel; independent)
 ```
 
+**GATE RESULT: ✅ PASSED** — AD7 attached to the SDK-style CPS project and breakpoints
+hit on real hardware. Concord is therefore a separate, lower-priority modernization item.
+
 - **GATE passes** → ship SDK-style build/pack/test + AD7 debugging; Concord becomes
   a separate, lower-priority modernization item.
 - **GATE fails at engine attach** → the seam (WS3) is already in place; scope the
@@ -169,7 +180,7 @@ WS3 (engine seam) ─┘   (parallel; independent)
 
 | Risk | Mitigation |
 |------|-----------|
-| **Load-bearing assumption**: AD7 may not attach to an SDK-style CPS project | This is exactly what WS4 settles; failure still yields a precise next step via the seam |
+| **Load-bearing assumption**: AD7 may not attach to an SDK-style CPS project | **SETTLED ✅** — WS4 confirmed AD7 attaches and breakpoints hit on hardware; the seam stays for a future Concord move |
 | Capability injection subtleties (SDK project type vs nano capability) | Keep the capability/targets approach; avoid re-owning the project-type GUID; test VS load early |
 | MDP re-host parity (checksum/stubs/`.pe`) | WS1 byte-identical `.pe` exit gate against legacy |
 | Future VS deprecates AD7 hosting | The seam means a forced Concord move doesn't touch WS1/WS2 or the device client |

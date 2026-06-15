@@ -55,15 +55,25 @@ namespace nanoFramework.Tools.VisualStudio.Extension
                     //Check version
                     var version2 = newFile.Assembly.Version;
 
+                    MessageCentre.InternalErrorWriteLine($"[BP-DIAG] pdbx found '{path}': file v{version2.Major}.{version2.Minor} vs device v{version.MajorVersion}.{version.MinorVersion}");
+
                     if (version2.Major == version.MajorVersion && version2.Minor == version.MinorVersion)
                     {
                         newFile.Initialize(path);
+                        MessageCentre.InternalErrorWriteLine($"[BP-DIAG] pdbx MATCHED + initialized: '{path}' ({newFile.Assembly.Classes?.Count ?? 0} classes)");
                         return newFile;
                     }
+
+                    MessageCentre.InternalErrorWriteLine($"[BP-DIAG] pdbx version MISMATCH -> rejected: '{path}'");
+                }
+                else
+                {
+                    MessageCentre.InternalErrorWriteLine($"[BP-DIAG] pdbx NOT FOUND at '{path}'");
                 }
             }
             catch (Exception ex)
             {
+                MessageCentre.InternalErrorWriteLine($"[BP-DIAG] pdbx EXCEPTION for '{path}': {ex.Message}");
             }
 
             return null;

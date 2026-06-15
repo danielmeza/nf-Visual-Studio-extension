@@ -34,13 +34,13 @@ specs and must not be reintroduced:
 NuGet packages in scope ship **managed** assets only (`.pe` + reference `.dll` +
 `.pdbx` + `.xml`).
 
-## 0.3 The blocker — and what the code actually shows ⛔
+## 0.3 The blocker — RESOLVED by the POC ✅
 
-The maintainer attributes the SDK-style block to the **VS debugger**
+The maintainer attributed the SDK-style block to the **VS debugger**
 ([#1635](https://github.com/orgs/nanoframework/discussions/1635)). A code-level
-read of `nf-Visual-Studio-extension` (`develop`) **refines** that into a more
-decomposable picture, which is the current working hypothesis (to be confirmed by
-the POC below):
+read of `nf-Visual-Studio-extension` (`develop`) **decomposed** that into a more
+tractable picture — and the executed POC then **confirmed** the decomposition by
+achieving deploy + F5 + source breakpoints on a real ESP32_S3_OCTAL:
 
 - The VS project system is **already CPS**, not a legacy MPF flavor
   (`NanoCSharpProject{Unconfigured,Configured}.cs`;
@@ -51,34 +51,40 @@ the POC below):
   GUID** (`LaunchDebugEngineGuid = CorDebug.EngineGuid`). None of this inspects the
   project-file format.
 
-So the concrete gate appears to be **(1) build-targets composition** — the nano
-targets import the legacy MSBuild chain and collide with `Microsoft.NET.Sdk`
-(#1635) — and **(2) project-type registration / capability injection** onto
-SDK-style projects. The **AD7 debug engine (`CorDebug`) is orthogonal**: launched
-by GUID, it should attach to an SDK-style CPS project once that project carries the
-capability. Migrating the engine **AD7 → Concord** is separate modernization
-(future-proofing against AD7 deprecation), **not** the unlock.
+So the concrete gate was **(1) build-targets composition** — the nano targets import
+the legacy MSBuild chain and collide with `Microsoft.NET.Sdk` (#1635) — and
+**(2) project-type registration / capability injection** onto SDK-style projects. The
+**AD7 debug engine (`CorDebug`) is orthogonal** — confirmed: launched by GUID, it
+attaches to the SDK-style CPS project unchanged once the project carries the
+`NanoCSharpProject` capability. Migrating the engine **AD7 → Concord** is separate
+modernization (future-proofing against AD7 deprecation), **not** the unlock.
 
-**Plan of record:** an A+C proof-of-concept (author a minimal `nanoFramework.Sdk`
-+ inject the capability, keep the AD7 engine, behind an engine-binding abstraction
-so Concord can be swapped later) — see
-[poc-sdk-style-debugging-plan.md](poc-sdk-style-debugging-plan.md). A read-only local
-diagnosis ([debugger-blocker-diagnosis-prompt.md](debugger-blocker-diagnosis-prompt.md))
-validates the hypothesis first. **The POC has been executed** — results, WS4 runbook,
-and decision gate are in [poc-sdk-style/RESULTS.md](../../../poc-sdk-style/RESULTS.md).
+**Plan of record (executed):** an A+C proof-of-concept — author a minimal
+`nanoFramework.Sdk` + inject the capability, keep the AD7 engine behind an
+engine-binding abstraction so Concord can be swapped later
+([poc-sdk-style-debugging-plan.md](poc-sdk-style-debugging-plan.md)). **The POC is
+done and the gate is cleared on hardware.** Results in
+[poc-sdk-style/RESULTS.md](../../../poc-sdk-style/RESULTS.md); the full decision record
+(every blocker + fix, §1–§6) in
+[poc-sdk-style/DEBUGGING-LOG.md](../../../poc-sdk-style/DEBUGGING-LOG.md). Four issues
+surfaced and were fixed: F5-console (LaunchProfiles removed + `DebuggerFlavor`),
+deploy version mismatch (checksum-only pre-check), breakpoints (Debug must emit a
+**Windows/full** PDB, not portable), and dev-only legacy `.nfproj` load (surface the
+`InstallRoot="MSBuild"` assets).
 
-What this still means in practice:
+What this means in practice now:
 
-## 0.3.1 Blocked vs. not blocked
+## 0.3.1 Blocked vs. not blocked → all paths proven
 
-- **Not blocked:** build, pack, and test via the CLI. MDP and the test adapter
-  look only at build outputs and standard MSBuild items, so they're project-type
-  agnostic.
-- **Blocked:** VS debugging on SDK-style projects, and therefore retiring the
-  flavor.
+- **Never blocked:** build, pack, and test via the CLI (cross-platform). MDP and the
+  test adapter look only at build outputs and standard MSBuild items, so they're
+  project-type agnostic.
+- **Was blocked, now proven:** VS deploy + debugging on SDK-style projects. The POC
+  demonstrated it on real hardware, so the flavor *can* be retired.
 
-The plan (doc 09) delivers all the unblocked value first and treats the debugger
-as an explicit gate; it is not solvable by the SDK or the build tooling.
+The remaining work is **productization** — packaging/publishing the `nanoFramework.Sdk`,
+folding the POC fixes back into the shipped extension, and fleet migration (doc 09) —
+**not** a feasibility question.
 
 ## 0.4 Corrected premises
 
@@ -103,8 +109,10 @@ Two further realities the specs build on:
 - The current project-system files (`NFProjectSystem.Default.props`,
   `NFProjectSystem.props`, `NFProjectSystem.CSharp.targets`,
   `NFProjectSystem.MDP.targets`) are distributed via the **VS extension**
-  (`$(MSBuildExtensionsPath)\nanoFramework\v1.0\`) and the **VS Code extension**
-  (`dist/utils/nanoFramework/v1.0/`), located via
+  (`$(MSBuildExtensionsPath)\nanoFramework\v1.0\`, shipped as `InstallRoot="MSBuild"`
+  VSIX assets — note a non-elevated *experimental-instance* deploy can't surface these,
+  which is why a legacy `.nfproj` fails to load there until restored; see DEBUGGING-LOG
+  §6) and the **VS Code extension** (`dist/utils/nanoFramework/v1.0/`), located via
   `$(NanoFrameworkProjectSystemPath)`. One of them
   (`NFProjectSystem.CSharp.targets`) re-imports
   `Microsoft.CSharp.CurrentVersion.targets`, which collides in SDK-style/imported

@@ -38,6 +38,8 @@ namespace nanoFramework.Tools.VisualStudio.Extension
 
         int ICorDebugCode.CreateBreakpoint(uint offset, out ICorDebugFunctionBreakpoint ppBreakpoint)
         {
+            MessageCentre.InternalErrorWriteLine($"[BP-DIAG] ICorDebugCode.CreateBreakpoint (SOURCE-LINE bind) offset=0x{offset:X}");
+
             ppBreakpoint = new CorDebugFunctionBreakpoint(_function, offset);
 
             return COM_HResults.S_OK;

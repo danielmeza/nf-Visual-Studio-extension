@@ -157,4 +157,6 @@ Deploy (explicit target)
 - **C8:** running the migration tool over a pilot of 5 `lib-*` repos produces
   building SDK projects with an empty manual-review list (or all review items
   genuinely non-default).
-- **C9:** gated on the VS debugger (doc 09 §9.5) — not scheduled until the gate lifts.
+- **C9:** the VS debugger gate (doc 09 §9.5) is **cleared ✅** — the POC deployed and
+  hit a source breakpoint on an SDK-style project in VS on real hardware. Remaining: fold
+  the POC fixes into the shipped extension (productization, not feasibility).

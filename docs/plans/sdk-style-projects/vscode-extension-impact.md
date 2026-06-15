@@ -132,5 +132,5 @@ to demonstrate SDK-style debugging end to end.
    `dist/utils/nanoFramework/*` payload, the `NanoFrameworkProjectSystemPath`
    injection, and the mono/msbuild/nuget prerequisites.
 
-The VS Code work is entirely in the "unblocked" column of doc 06 §6.3 — none of it
-waits on the VS AD7 debugger gate.
+The VS Code work was entirely in the "unblocked" column of doc 06 §6.3 — none of it
+ever waited on the VS AD7 debugger gate (which the POC has since cleared anyway).

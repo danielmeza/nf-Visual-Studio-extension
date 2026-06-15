@@ -23,7 +23,7 @@ dependency that gates the rest.
 This is a **tracking/epic issue**. Detailed design docs will be linked in
 follow-up comments; this stays at the plan level.
 
-## Known blocker — the VS debugger, decomposed ⛔
+## The VS-debugger blocker — RESOLVED by the POC ✅ (decomposed, then confirmed on hardware)
 
 Per maintainer feedback in
 [#1635](https://github.com/orgs/nanoframework/discussions/1635), the move to
@@ -31,8 +31,9 @@ SDK-style is currently attributed to the **VS debugger**: SDK-style isn't viable
 right now, with hope that a future VS version makes it possible; the `dotnet` CLI
 flow is not an officially supported path today.
 
-A code-level read of `nf-Visual-Studio-extension` (`develop`) **refines this into
-a decomposable picture** — a working hypothesis to be validated by a POC:
+A code-level read of `nf-Visual-Studio-extension` (`develop`) **decomposed this** —
+a hypothesis the executed POC then **confirmed on real hardware** (deploy + F5 +
+source breakpoints, AD7 engine unchanged):
 
 - The VS project system is **already CPS**, not a legacy MPF flavor
   (`NanoCSharpProject{Unconfigured,Configured}.cs`;
@@ -43,21 +44,22 @@ a decomposable picture** — a working hypothesis to be validated by a POC:
   (`LaunchDebugEngineGuid = CorDebug.EngineGuid`). None of this inspects the
   project-file format.
 
-So the concrete gate appears to be **(1) build-targets composition** (the nano
-targets import the legacy MSBuild chain and collide with `Microsoft.NET.Sdk` —
-#1635) and **(2) project-type registration / capability injection**. The **AD7
-debug engine is likely orthogonal** — launched by GUID, it should attach to an
-SDK-style CPS project once that project carries the capability. The **AD7 → Concord**
-engine migration is separate modernization (future-proofing against AD7
-deprecation), **not** the unlock.
+So the concrete gate was **(1) build-targets composition** (the nano targets import
+the legacy MSBuild chain and collide with `Microsoft.NET.Sdk` — #1635) and
+**(2) project-type registration / capability injection**. The **AD7 debug engine is
+orthogonal** (confirmed) — launched by GUID, it attaches to an SDK-style CPS project
+unchanged once that project carries the capability. The **AD7 → Concord** engine
+migration is separate modernization (future-proofing against AD7 deprecation), **not**
+the unlock.
 
-**Proposed first step — an A+C proof-of-concept:** author a minimal
-`nanoFramework.Sdk` composing over `Microsoft.NET.Sdk` + inject the
-`NanoCSharpProject` capability, keep the AD7 engine, behind an **engine-binding
-abstraction** so a Concord engine can be swapped later without touching the
-launch/deploy/project-system layers. The POC gate is: an SDK-style sample loads in
-VS, deploys via F5, and a breakpoint binds and hits. A read-only diagnosis confirms
-the hypothesis first.
+**Executed — the A+C proof-of-concept (gate passed ✅):** a minimal `nanoFramework.Sdk`
+composing over `Microsoft.NET.Sdk` + the injected `NanoCSharpProject` capability, AD7
+engine kept behind an **engine-binding abstraction** for a future Concord swap. On a
+real ESP32_S3_OCTAL the SDK-style sample loads in VS, deploys via F5, and a breakpoint
+**binds and hits**. Four issues were found and fixed en route (F5-console, deploy
+version-mismatch → checksum pre-check, breakpoints → Windows/full PDB, dev-only legacy
+`.nfproj` load) — see
+[poc-sdk-style/DEBUGGING-LOG.md](../../../poc-sdk-style/DEBUGGING-LOG.md).
 
 What's reachable regardless of the gate:
 
@@ -100,13 +102,13 @@ and projects still use `packages.config`. Closing that gap is unblocked work
   [#1067](https://github.com/nanoframework/Home/issues/1067)).
 - Stand up an **experimental, opt-in** CLI build/pack/test path for SDK-style
   projects — explicitly *not* a replacement for the VS experience.
-- Keep migration tooling ready for when the gate lifts.
+- Migration tooling is ready; with the gate cleared (POC), it can proceed.
 
-**Gated (require the debugger to work on SDK-style):**
+**Was gated on the debugger — now PROVEN by the POC (remaining work is productization, not feasibility):**
 
-- VS debugging / F5 on SDK-style projects.
-- SDK-style as the *supported, default* project format.
-- Retiring the project flavor and the legacy `.nfproj`.
+- VS debugging / F5 on SDK-style projects — ✅ demonstrated on real hardware.
+- SDK-style as the *supported, default* project format — now unblocked to pursue.
+- Retiring the project flavor and the legacy `.nfproj` — now feasible (kept supported during transition).
 
 ## Non-goals — out of scope for this effort
 
@@ -164,9 +166,9 @@ and projects still use `packages.config`. Closing that gap is unblocked work
 
 - [ ] Agree direction, the `nanoFramework.Sdk` repo home, and interim-shape policy
 - [ ] Packages republished targeting `netnano1.0`
-- [ ] NFProjectSystem targets import fixed for SDK-style/imported contexts
-- [ ] Experimental CLI build/pack/test validated on `CoreLibrary` + a `Samples` app
-- [ ] **Gate:** VS debugger works on SDK-style projects
+- [x] NFProjectSystem targets import fixed for SDK-style/imported contexts — POC SDK composes over `Microsoft.NET.Sdk` and owns the import chain
+- [x] Experimental CLI build/pack/test validated — POC `Blink` builds `.pe`/`.pdbx`, cross-platform
+- [x] **Gate:** VS debugger works on SDK-style projects — **PROVEN on real hardware** (deploy + F5 + source breakpoints); see [poc-sdk-style/DEBUGGING-LOG.md](../../../poc-sdk-style/DEBUGGING-LOG.md)
 - [ ] SDK-style supported as an option; preview `nanoFramework.Sdk` published
 - [ ] Fleet migration (leaf-first)
 - [ ] Legacy project system deprecated

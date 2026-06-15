@@ -36,4 +36,30 @@
     <NanoPdbxOutputPath Condition="'$(NanoPdbxOutputPath)' == ''">$(TargetDir)$(TargetName).pdbx</NanoPdbxOutputPath>
   </PropertyGroup>
 
+  <!--
+    F5 / debug-launch wiring for SDK-style nano projects (WS4) — mirrors the legacy
+    VisualStudio.Extension-2022/Targets/NFProjectSystem.CSharp.targets.
+
+    An SDK-style Exe .csproj inherits the 'LaunchProfiles' capability from
+    Microsoft.NET.Sdk, which makes the C# project system own F5 and run the app as
+    a local .NET console process (no device target). Removing that capability lets
+    VS select the extension's NanoDebugger (DisplayName ".NET nanoFramework Device",
+    [ExportDebugger("NanoDebugger")] [AppliesTo("NanoCSharpProject")]) instead. We
+    also surface the NanoDebugger rule (shipped in this SDK) and flag the project
+    debugger flavor, exactly as the legacy flavor does.
+
+    Placed AFTER the Microsoft.NET.Sdk import so the capability Remove follows the
+    Include in item document order (otherwise the later Include re-adds it).
+    Guarded on the nano TFM so non-nano builds are untouched.
+  -->
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETnanoFramework'">
+    <ProjectCapability Remove="LaunchProfiles" />
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\NanoDebugger.xaml">
+      <Context>Project</Context>
+    </PropertyPageSchema>
+  </ItemGroup>
+  <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETnanoFramework'">
+    <DebuggerFlavor Condition="'$(DebuggerFlavor)' == ''">NanoDebugger</DebuggerFlavor>
+  </PropertyGroup>
+
 </Project>

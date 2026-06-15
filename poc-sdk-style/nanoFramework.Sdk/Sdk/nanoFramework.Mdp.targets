@@ -17,12 +17,26 @@
        net6.0 for `dotnet build` (MSBuildRuntimeType=Core),
        net472 for Visual Studio / Developer Command Prompt (Full). -->
   <PropertyGroup>
-    <_NanoMdpTaskTfm Condition="'$(MSBuildRuntimeType)' == 'Core'">net6.0</_NanoMdpTaskTfm>
+    <!-- MDP v4 (NFMRK2) ships net8.0 (dotnet build) + net472 (Visual Studio). -->
+    <_NanoMdpTaskTfm Condition="'$(MSBuildRuntimeType)' == 'Core'">net8.0</_NanoMdpTaskTfm>
     <_NanoMdpTaskTfm Condition="'$(MSBuildRuntimeType)' != 'Core'">net472</_NanoMdpTaskTfm>
 
-    <!-- Allow an explicit override (CI, local task builds), else use the
-         GeneratePathProperty path from the restored MDP package (Sdk.targets). -->
-    <NanoMdpTaskAssembly Condition="'$(NanoMdpTaskAssembly)' == '' and '$(PkgnanoFramework_Tools_MetadataProcessor_MsBuildTask)' != ''">$(PkgnanoFramework_Tools_MetadataProcessor_MsBuildTask)\lib\$(_NanoMdpTaskTfm)\nanoFramework.Tools.MetadataProcessor.MsBuildTask.dll</NanoMdpTaskAssembly>
+    <!--
+      Resolve the task DLL into a PRIVATE property. An explicit NanoMdpTaskAssembly
+      (user / CI / local task build) wins; otherwise derive it from the restored MDP
+      package's GeneratePathProperty path ($(Pkg...), supplied by Sdk.targets).
+
+      CRITICAL: the derived path is written to _NanoMdpTaskAssembly, NOT back to
+      NanoMdpTaskAssembly. The MDP PackageReference in Sdk.props is gated on
+      '$(NanoMdpTaskAssembly)' == ''. If this target wrote the derived path back to
+      NanoMdpTaskAssembly, that gate would flip to false AFTER the package restores
+      (Pkg... becomes set) and flip back to true after the next restore drops it —
+      the PackageReference set would oscillate between Visual Studio's restore
+      nominations and trigger "A NuGet restore loop has been detected". Keeping
+      NanoMdpTaskAssembly a pure user-input knob makes the restore graph invariant.
+    -->
+    <_NanoMdpTaskAssembly Condition="'$(NanoMdpTaskAssembly)' != ''">$(NanoMdpTaskAssembly)</_NanoMdpTaskAssembly>
+    <_NanoMdpTaskAssembly Condition="'$(_NanoMdpTaskAssembly)' == '' and '$(PkgnanoFramework_Tools_MetadataProcessor_MsBuildTask)' != ''">$(PkgnanoFramework_Tools_MetadataProcessor_MsBuildTask)\lib\$(_NanoMdpTaskTfm)\nanoFramework.Tools.MetadataProcessor.MsBuildTask.dll</_NanoMdpTaskAssembly>
 
     <NanoMdpVerbose Condition="'$(NanoMdpVerbose)' == ''">false</NanoMdpVerbose>
   </PropertyGroup>
@@ -36,8 +50,8 @@
 
 
   <UsingTask TaskName="MetaDataProcessorTask"
-             AssemblyFile="$(NanoMdpTaskAssembly)"
-             Condition="'$(NanoMdpTaskAssembly)' != ''" />
+             AssemblyFile="$(_NanoMdpTaskAssembly)"
+             Condition="'$(_NanoMdpTaskAssembly)' != ''" />
 
   <!--
     Convert the Roslyn IL assembly to a nanoFramework PE.
@@ -53,10 +67,10 @@
           Inputs="@(IntermediateAssembly);@(ReferencePath)"
           Outputs="$(NanoPeOutputPath);$(NanoPdbxOutputPath)">
 
-    <Error Condition="'$(NanoMdpTaskAssembly)' == ''"
+    <Error Condition="'$(_NanoMdpTaskAssembly)' == ''"
            Text="nanoFramework.Sdk: could not locate the Metadata Processor task assembly. Set NanoMdpTaskAssembly or ensure the nanoFramework.Tools.MetadataProcessor.MsBuildTask package restored." />
-    <Error Condition="!Exists('$(NanoMdpTaskAssembly)')"
-           Text="nanoFramework.Sdk: Metadata Processor task assembly not found at '$(NanoMdpTaskAssembly)'." />
+    <Error Condition="!Exists('$(_NanoMdpTaskAssembly)')"
+           Text="nanoFramework.Sdk: Metadata Processor task assembly not found at '$(_NanoMdpTaskAssembly)'." />
 
     <Message Importance="normal"
              Text="nanoFramework: emitting PE %(IntermediateAssembly.FullPath) -> $(NanoPeOutputPath)" />

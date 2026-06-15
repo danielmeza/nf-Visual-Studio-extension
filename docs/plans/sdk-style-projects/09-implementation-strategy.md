@@ -65,7 +65,7 @@ debugging remains on the legacy path.
 - **Coexistence:** legacy `.nfproj` untouched; SDK opt-in; VS debugging stays legacy.
 - **Exit:** a pilot set of ~5 pure-managed `lib-*` repos build/pack/test from the CLI.
 
-### Phase 2 — Debugger enablement: the A+C POC (THE GATE) ⛔
+### Phase 2 — Debugger enablement: the A+C POC (THE GATE) — ✅ PASSED
 - Run the read-only local diagnosis ([debugger-blocker-diagnosis-prompt.md](debugger-blocker-diagnosis-prompt.md)) to
   confirm the hypothesis (§9.5).
 - Execute the **A+C POC** ([poc-sdk-style-debugging-plan.md](poc-sdk-style-debugging-plan.md)): minimal
@@ -74,8 +74,13 @@ debugging remains on the legacy path.
   abstraction (WS3) that keeps the AD7 engine now and allows a Concord swap later.
 - **Gate (WS4):** an SDK-style sample loads in VS, deploys via F5, and a breakpoint
   binds and hits with the AD7 engine.
-- If the gate fails at engine attach, the abstraction makes the Concord engine
-  (model on the Concord **Iris** sample) a contained next workstream — WS1/WS2 stand.
+- **RESULT — passed ✅:** done on a real ESP32_S3_OCTAL. Deploy + F5 + source
+  breakpoints work with the AD7 engine **unchanged**; the engine never needed swapping.
+  Four fixes were required (F5-console, deploy checksum pre-check, Windows/full PDB for
+  breakpoints, dev-only legacy `.nfproj` load) — see
+  [poc-sdk-style/DEBUGGING-LOG.md](../../../poc-sdk-style/DEBUGGING-LOG.md). The Concord
+  engine stays a deferred, lower-priority modernization (the WS3 seam is in place if it
+  is ever forced).
 
 ### Phase 3 — SDK-style as a supported option (post-gate)
 - VS debug / F5 on SDK-style projects via the path proven in Phase 2; the deploy
@@ -94,7 +99,7 @@ debugging remains on the legacy path.
 | Concern | Mechanism |
 |--------|-----------|
 | Both project types build | SDK ships alongside `NFProjectSystem.*`; neither imports the other |
-| VS debugging | Stays on legacy `.nfproj` until the gate (Phase 2) lifts |
+| VS debugging | SDK-style **proven** (Phase 2 gate passed on hardware); legacy `.nfproj` stays supported during the transition |
 | Cross-references | `ProjectReference` both ways; `PackageReference` both ways within the TFM (doc 03) |
 | Feed compatibility | Packages target `netnano1.0`; managed assets only |
 | CI runs both | Legacy repos keep MSBuild steps; migrated repos use `dotnet` steps |
@@ -106,8 +111,8 @@ The maintainer attributes the SDK-style block to the **VS debugger**
 SDK-style isn't viable as a supported format right now, with hope that a future VS
 version improves it; the `dotnet` CLI flow is not yet officially supported.
 
-**A code-level read of `nf-Visual-Studio-extension` refines this** (working
-hypothesis, validated by the POC):
+**A code-level read of `nf-Visual-Studio-extension` refined this** (hypothesis
+**confirmed by the executed POC** — deploy + F5 + breakpoints on real hardware):
 - The VS project system is **already CPS** (`<ProjectCapability Include="CPS" />`;
   `NanoCSharpProject{Unconfigured,Configured}.cs`).
 - Deploy (`IDeployProvider`) and debug-launch (`DebugLaunchProviderBase`) are CPS
@@ -124,16 +129,17 @@ carries the capability. Migrating **AD7 → Concord** is separate modernization
 What is and isn't blocked:
 - **Not blocked:** build, pack, and test. MDP and the test adapter look only at
   build *outputs* and standard MSBuild items, so they're project-type agnostic.
-- **The gate (under test):** SDK-style projects loading + debugging in VS — gated
-  on (1)+(2), **not** on rewriting the engine, if the hypothesis holds.
+- **The gate (PROVEN ✅):** SDK-style projects load + debug in VS — gated on (1)+(2),
+  **not** on rewriting the engine. The POC confirmed this on hardware, AD7 unchanged.
 
-**Plan of record:** the A+C proof-of-concept ([poc-sdk-style-debugging-plan.md](poc-sdk-style-debugging-plan.md))
-authors a minimal `nanoFramework.Sdk` + injects the capability, keeps the AD7
-engine, and puts an engine-binding abstraction in place so Concord can be swapped
-later. A read-only local diagnosis ([debugger-blocker-diagnosis-prompt.md](debugger-blocker-diagnosis-prompt.md))
-confirms the hypothesis first. If the POC's F5-breakpoint gate fails at engine
-attach, the abstraction makes the Concord engine a contained next workstream
-rather than a cross-cutting rewrite.
+**Plan of record (executed — gate passed ✅):** the A+C proof-of-concept
+([poc-sdk-style-debugging-plan.md](poc-sdk-style-debugging-plan.md)) authored a minimal
+`nanoFramework.Sdk` + injected the capability, kept the AD7 engine, and put an
+engine-binding abstraction in place for a future Concord swap. It deployed and hit
+source breakpoints on a real ESP32 — see
+[poc-sdk-style/DEBUGGING-LOG.md](../../../poc-sdk-style/DEBUGGING-LOG.md) for the
+blockers found and fixed (§3–§6). The engine-binding seam stays in place should a
+future VS ever force a Concord move; it was **not** needed for the unlock.
 
 ## 9.6 Out of scope: native and OTA
 

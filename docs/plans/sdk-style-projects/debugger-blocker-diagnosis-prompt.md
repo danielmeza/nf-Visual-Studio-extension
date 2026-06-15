@@ -1,5 +1,13 @@
 # Prompt — Diagnose **and** solve the nanoFramework SDK-style debugger blocker
 
+> **OUTCOME — blocker SOLVED ✅ (this prompt is retained as the method record).** The
+> investigation + A+C POC it describes were executed: an SDK-style project deploys and
+> debugs (F5 + source breakpoints) on a real ESP32_S3_OCTAL with the AD7 engine
+> unchanged. The gate was **build-targets composition + the `NanoCSharpProject`
+> capability**, exactly as hypothesized; the engine was orthogonal. Results in
+> [poc-sdk-style/RESULTS.md](../../../poc-sdk-style/RESULTS.md), full decision record in
+> [poc-sdk-style/DEBUGGING-LOG.md](../../../poc-sdk-style/DEBUGGING-LOG.md).
+
 > Paste this into an agent (e.g. Claude Code) running in a workspace where the
 > nanoFramework repos are cloned. It is a **read-only investigation**: inspect
 > code and produce a findings + solution-options report. Do not modify any repo.

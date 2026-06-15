@@ -10,23 +10,35 @@ and `nanoFramework.CoreLibrary` **2.0.0-preview.52** (v2 preview). Reproduce wit
 > `AssetTargetFallback`, no NU1701 warning. The SDK keeps the fallback as a
 > harmless bridge for any not-yet-republished (v1-era) packages in a graph.
 
+> **UPDATE — gate CLEARED on real hardware ✅.** The WS4 engine-attach half (left
+> open on macOS below) was since validated on **Windows + Visual Studio against a
+> physical ESP32_S3_OCTAL**: the SDK-style `Blink` deploys via F5 and **source
+> breakpoints bind and hit**, AD7 engine unchanged. Four issues surfaced and were
+> fixed along the way — F5-console (LaunchProfiles removed + `DebuggerFlavor`), deploy
+> version mismatch (→ checksum-only pre-check), breakpoints (→ Windows/full PDB, not
+> portable), and a dev-only legacy `.nfproj` load. Full decision record:
+> [DEBUGGING-LOG.md](DEBUGGING-LOG.md) §3–§6; multi-device design:
+> [DEVICE-RUN-DROPDOWN.md](DEVICE-RUN-DROPDOWN.md). The macOS build-side results below
+> remain accurate.
+
 ## TL;DR
 
 The hypothesis's **build-targets-composition half is confirmed**: a minimal,
 reusable `nanoFramework.Sdk` that composes over `Microsoft.NET.Sdk` builds an
 SDK-style `.csproj` clean and emits a byte-correct nanoFramework `.pe` + `.pdbx`
-on a plain machine, no VS. The **engine-attach half (the actual breakpoint) is
-not decidable on macOS** — it needs Visual Studio on an interactive Windows
-session — so WS4 stays open with a precise runbook below. WS3 puts the engine
-seam in place so that, whichever way WS4 lands, the next step is contained.
+on a plain machine, no VS. The **engine-attach half (the actual breakpoint) was not
+decidable on macOS** — it needs Visual Studio on Windows — and has since been
+**confirmed on real hardware** (see the banner above): F5 + breakpoints work on the
+SDK-style project with the AD7 engine unchanged. WS3's engine seam stays in place for
+a future Concord swap, but was **not** needed for the unlock.
 
 | WS | What | Status here |
 |----|------|-------------|
 | WS1 | Minimal `nanoFramework.Sdk` (targets composition + MDP re-host) | ✅ **Proven** — builds, emits `.pe`/`.pdbx` |
 | WS1 gate | PE parity vs. legacy MDP | ✅ **Byte-identical** (same IL → same PE) |
-| WS2 | `NanoCSharpProject` CPS capability injection | ✅ **Build-side proven** (capability present); VS-load effect ⏳ Windows |
-| WS3 | `INanoDebugEngineBinding` seam (AD7 impl + Concord stub) | ✅ **Authored & wired**; compiles in the VS extension build (Windows) |
-| WS4 | F5 + breakpoint binds/hits | ⏳ **Open** — needs VS/Windows (+ device or `nanoclr` virtual device) |
+| WS2 | `NanoCSharpProject` CPS capability injection | ✅ **Proven** — VS loads the SDK-style project via CPS and instantiates the nano deploy/debug providers (confirmed on Windows) |
+| WS3 | `INanoDebugEngineBinding` seam (AD7 impl + Concord stub) | ✅ **Authored & wired**; compiles in the VS extension build (Windows). Not needed for the unlock |
+| WS4 | F5 + breakpoint binds/hits | ✅ **PASSED on hardware** — F5 deploy + source breakpoints on a physical ESP32_S3_OCTAL (see banner / [DEBUGGING-LOG.md](DEBUGGING-LOG.md) §3–§6) |
 
 ---
 
@@ -109,7 +121,10 @@ implementer will hit:
   (empty dir + empty name).
 
 ### Evidence
-- `Blink.pe` starts with `NFMRK1` (the nano PE magic; same as `mscorlib.pe`).
+- `Blink.pe` starts with `NFMRK1` (the nano PE magic; same as `mscorlib.pe`). *Note:
+  this macOS run pinned MDP 3.0.100 = v1/`NFMRK1`; the v2 device firmware needs
+  v2/`NFMRK2`, so the hardware build later moved to MDP 4.0-preview — see
+  [DEBUGGING-LOG.md](DEBUGGING-LOG.md) §2.*
 - `Blink.pdbx` is the nano debug DB (CLR↔nanoCLR token map, `FileName=Blink.exe`).
 - Build is **deterministic** (byte-identical `.pe` across rebuilds).
 - **WS1 parity gate:** feeding the *same* IL assembly to a legacy-shaped
@@ -162,7 +177,14 @@ and is reused by both bindings.
 
 ---
 
-## WS4 — the open gate, and how to actually validate it (incl. CI)
+## WS4 — VALIDATED on hardware ✅ (Layer A/B runbook retained for CI)
+
+**RESULT:** Layer B (the literal F5 gesture) was completed on **Windows + Visual
+Studio against a physical ESP32_S3_OCTAL** — the SDK-style `Blink` deploys via F5 and
+source breakpoints bind and hit, AD7 engine unchanged. Reaching it required four fixes
+(F5-console, deploy version mismatch → checksum pre-check, breakpoints → Windows/full
+PDB, dev-only legacy `.nfproj` load) — see [DEBUGGING-LOG.md](DEBUGGING-LOG.md) §3–§6.
+The Layer A/B runbook below is retained for **CI automation** of this gate.
 
 WS4 is "set a breakpoint, F5, confirm it binds + hits + steps + locals." It can't
 run on macOS. There are **two layers** to validate, and they have very different
@@ -243,6 +265,11 @@ A′) — can even drive a debug session. It cannot host **Visual Studio** or th
 ---
 
 ## Decision gate
+
+**RESULT: ✅ PASSED via Layer B (real VS F5) on hardware.** AD7 attached to the
+SDK-style CPS project and breakpoints hit, engine unchanged → the engine is orthogonal
+to project format (hypothesis confirmed). Ship WS1+WS2 (+AD7 binding); Concord is
+deferred modernization. The branches below are retained as the original decision logic.
 
 - **If Layer A binds+hits the breakpoint on the SDK-built PE** → the engine is
   orthogonal to project format (hypothesis confirmed at the protocol level);

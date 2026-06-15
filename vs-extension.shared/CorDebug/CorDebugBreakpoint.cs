@@ -25,6 +25,8 @@ namespace nanoFramework.Tools.VisualStudio.Extension
 
         public override void Hit(BreakpointDef breakpointDef)
         {
+            MessageCentre.InternalErrorWriteLine($"[BP-DIAG] HIT: IP=0x{breakpointDef.m_IP:X} md=0x{breakpointDef.m_md:X} pid={breakpointDef.m_pid} flags=0x{breakpointDef.m_flags:X}");
+
             CorDebugThread thread = Process.GetThread(breakpointDef.m_pid);
 
             Process.EnqueueEvent(new ManagedCallbacks.ManagedCallbackBreakpoint(thread, this, TypeToMarshal));
@@ -63,6 +65,8 @@ namespace nanoFramework.Tools.VisualStudio.Extension
 
             m_breakpointDef.m_IP = m_il.NanoCLRToken;
             m_breakpointDef.m_md = m_function.MethodDef_Index;
+
+            MessageCentre.InternalErrorWriteLine($"[BP-DIAG] BIND fn breakpoint: ilCLR=0x{ilCLR:X} -> ilNanoCLR=0x{m_il.NanoCLRToken:X}, md=0x{m_breakpointDef.m_md:X}");
 
             Active = true;
         }

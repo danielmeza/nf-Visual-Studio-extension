@@ -6,8 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- v2 preview: this package is republished against netnano1.0 (ships
-         lib/netnano1.0/), so it restores natively with no AssetTargetFallback. -->
+    <!-- Standard v2-preview CoreLibrary. Blink.pe references mscorlib at its MANAGED
+         version (2.0.0.0) — which is what the CLR linker resolves against, and what the
+         deployment image ships as mscorlib.pe (2.0.0.0, checksum 0x2D5CA905, binding to
+         the firmware natives). The firmware's "native version" 100.22.0.4 is a separate
+         field and must NOT be stamped into the app reference (that was the earlier MDP
+         mistake). Deploy with "Generate deployment image" enabled so mscorlib.pe ships. -->
     <PackageReference Include="nanoFramework.CoreLibrary" Version="2.0.0-preview.52" />
   </ItemGroup>
 

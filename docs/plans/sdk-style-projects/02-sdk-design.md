@@ -199,7 +199,11 @@ Build
    which the SDK already imports — see
    [#1635](https://github.com/orgs/nanoframework/discussions/1635),
    [#1067](https://github.com/nanoframework/Home/issues/1067)). The SDK must own
-   the import chain so this collision can't happen.
-4. **The VS debugger dependency** (doc 09) — the gate for SDK-style as a
-   *supported* format. Not solved by the SDK or the build; tracked against VS / VS
-   SDK evolution.
+   the import chain so this collision can't happen — **done in the POC** (`Sdk.props`/
+   `Sdk.targets` compose over `Microsoft.NET.Sdk` and own the import order; the legacy
+   `NFProjectSystem.*` targets are not imported).
+4. **The VS debugger dependency** (doc 09) — was the gate for SDK-style as a
+   *supported* format. **RESOLVED by the POC ✅:** with the SDK injecting the
+   `NanoCSharpProject` capability, the existing AD7 engine deploys + debugs (F5 +
+   breakpoints) an SDK-style project on real hardware, unchanged — no VS / VS-SDK
+   evolution needed. See [poc-sdk-style/DEBUGGING-LOG.md](../../../poc-sdk-style/DEBUGGING-LOG.md).

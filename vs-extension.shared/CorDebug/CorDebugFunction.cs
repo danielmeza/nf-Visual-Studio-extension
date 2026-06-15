@@ -142,6 +142,8 @@ namespace nanoFramework.Tools.VisualStudio.Extension
 
             uint ilnanoCLR = ILComparer.Map(true, _pdbxMethod.ILMap, ilCLR);
 
+            MessageCentre.InternalErrorWriteLine($"[BP-DIAG] map '{_pdbxMethod?.Name}': ilCLR=0x{ilCLR:X} -> ilNanoCLR=0x{ilnanoCLR:X} (ILMap entries={_pdbxMethod?.ILMap?.Count ?? 0})");
+
             Debug.Assert(ilnanoCLR <= ilCLR);
 
             return ilnanoCLR;
@@ -239,6 +241,8 @@ namespace nanoFramework.Tools.VisualStudio.Extension
 
         int ICorDebugFunction.CreateBreakpoint(out ICorDebugFunctionBreakpoint ppBreakpoint)
         {
+            MessageCentre.InternalErrorWriteLine($"[BP-DIAG] ICorDebugFunction.CreateBreakpoint (FUNCTION-ENTRY fallback, offset=0) -> VS could NOT map source line to IL (likely portable PDB; needs Windows/full PDB)");
+
             ppBreakpoint = new CorDebugFunctionBreakpoint(this, 0);
 
             return COM_HResults.S_OK;
