@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  nanoFramework.Mdp.targets — re-host the Metadata Processor inside the SDK graph.
+
+  MDP is already an MSBuild task (nanoFramework.Tools.MetadataProcessor.MsBuildTask);
+  the migration is to re-host it with explicit Inputs/Outputs ordering instead of
+  hijacking CoreBuildDependsOn the way the legacy NFProjectSystem.MDP.targets does.
+
+  Sequence (doc 04 §4.3):
+      ResolveReferences (Microsoft.NET.Sdk)
+        -> CoreCompile   (Roslyn -> obj/<Asm>.dll IL + .pdb)
+        -> NanoEmitPe    (MDP    -> bin/<Asm>.pe + .pdbx + NativeMethodsChecksum)
+-->
+<Project>
+
+  <!-- Resolve the MDP task DLL for whichever MSBuild host we run under:
+       net6.0 for `dotnet build` (MSBuildRuntimeType=Core),
+       net472 for Visual Studio / Developer Command Prompt (Full). -->
+  <PropertyGroup>
+    <_NanoMdpTaskTfm Condition="'$(MSBuildRuntimeType)' == 'Core'">net6.0</_NanoMdpTaskTfm>
+    <_NanoMdpTaskTfm Condition="'$(MSBuildRuntimeType)' != 'Core'">net472</_NanoMdpTaskTfm>
+
+    <!-- Allow an explicit override (CI, local task builds), else use the
+         GeneratePathProperty path from the restored MDP package (Sdk.targets). -->
+    <NanoMdpTaskAssembly Condition="'$(NanoMdpTaskAssembly)' == '' and '$(PkgnanoFramework_Tools_MetadataProcessor_MsBuildTask)' != ''">$(PkgnanoFramework_Tools_MetadataProcessor_MsBuildTask)\lib\$(_NanoMdpTaskTfm)\nanoFramework.Tools.MetadataProcessor.MsBuildTask.dll</NanoMdpTaskAssembly>
+
+    <NanoMdpVerbose Condition="'$(NanoMdpVerbose)' == ''">false</NanoMdpVerbose>
+  </PropertyGroup>
+
+  <!--
+    NanoPeOutputPath / NanoPdbxOutputPath default to $(TargetDir)$(TargetName).*,
+    but TargetDir / TargetName are defined by Microsoft.Common.targets, which is
+    imported AFTER this file. So Sdk.targets fills those defaults once that import
+    has run (see Sdk.targets). A consumer may still set them earlier to override.
+  -->
+
+
+  <UsingTask TaskName="MetaDataProcessorTask"
+             AssemblyFile="$(NanoMdpTaskAssembly)"
+             Condition="'$(NanoMdpTaskAssembly)' != ''" />
+
+  <!--
+    Convert the Roslyn IL assembly to a nanoFramework PE.
+
+    Parse the INTERMEDIATE (obj) assembly: its portable .pdb sits next to it, and
+    MDP reads that to emit the .pdbx the AD7 engine consumes. Inputs/Outputs make
+    the step incremental (the legacy MDP re-ran on every build).
+  -->
+  <Target Name="NanoEmitPe"
+          Condition="'$(NanoEmitPe)' == 'true'"
+          AfterTargets="CoreCompile"
+          DependsOnTargets="ResolveReferences"
+          Inputs="@(IntermediateAssembly);@(ReferencePath)"
+          Outputs="$(NanoPeOutputPath);$(NanoPdbxOutputPath)">
+
+    <Error Condition="'$(NanoMdpTaskAssembly)' == ''"
+           Text="nanoFramework.Sdk: could not locate the Metadata Processor task assembly. Set NanoMdpTaskAssembly or ensure the nanoFramework.Tools.MetadataProcessor.MsBuildTask package restored." />
+    <Error Condition="!Exists('$(NanoMdpTaskAssembly)')"
+           Text="nanoFramework.Sdk: Metadata Processor task assembly not found at '$(NanoMdpTaskAssembly)'." />
+
+    <Message Importance="normal"
+             Text="nanoFramework: emitting PE %(IntermediateAssembly.FullPath) -> $(NanoPeOutputPath)" />
+
+    <MetaDataProcessorTask
+        Parse="@(IntermediateAssembly->'%(FullPath)')"
+        Compile="$(NanoPeOutputPath)"
+        LoadHints="@(ReferencePath)"
+        Verbose="$(NanoMdpVerbose)">
+      <Output TaskParameter="NativeChecksum" PropertyName="NanoNativeMethodsChecksum" />
+      <Output TaskParameter="FilesWritten" ItemName="FileWrites" />
+    </MetaDataProcessorTask>
+
+    <!-- Surface the ABI hash as a first-class build output (doc 04 §4.5). -->
+    <ItemGroup>
+      <FileWrites Include="$(NanoPeOutputPath);$(NanoPdbxOutputPath)" />
+    </ItemGroup>
+
+    <Message Importance="high"
+             Text="nanoFramework: $(TargetName).pe written (NativeMethodsChecksum=$(NanoNativeMethodsChecksum))." />
+  </Target>
+
+</Project>

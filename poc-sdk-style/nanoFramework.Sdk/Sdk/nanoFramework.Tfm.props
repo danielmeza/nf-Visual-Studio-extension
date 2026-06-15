@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  nanoFramework.Tfm.props — the netnano1.0 target framework moniker.
+
+  netnano1.0 is ALREADY a recognized TFM in the .NET SDK / NuGet client
+  (Microsoft TFM table: ".NET nanoFramework -> netnano1.0"). The SDK parses it
+  into .NETnanoFramework / v1.0 on its own. Two things still need handling:
+
+    1. There is no netnano1.0 *targeting pack*, so GetReferenceAssemblyPaths
+       fails with MSB3644. We suppress it the same way the legacy
+       NFProjectSystem.CSharp.targets does, by pointing the framework-directory
+       properties at a real (dummy) folder and flagging TargetingClr2Framework.
+
+    2. nanoFramework NuGet packages are not yet published against netnano1.0
+       (they expose assets under a bare lib/, read by NuGet as .NETFramework
+       v0.0 — discussion #1635). Until they are republished, restore needs an
+       AssetTargetFallback to a net framework so the bare-lib assets resolve.
+       Republishing the packages against netnano1.0 removes the need for this.
+-->
+<Project>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netnano1.0'">
+    <TargetFrameworkIdentifier>.NETnanoFramework</TargetFrameworkIdentifier>
+    <TargetFrameworkVersion>v1.0</TargetFrameworkVersion>
+    <TargetFrameworkMoniker>.NETnanoFramework,Version=v1.0</TargetFrameworkMoniker>
+    <TargetFrameworkMonikerDisplayName>.NET nanoFramework 1.0</TargetFrameworkMonikerDisplayName>
+
+    <DefineConstants>$(DefineConstants);NANOFRAMEWORK_1_0</DefineConstants>
+
+    <!-- (1) Bypass the missing targeting pack — no netnano1.0 Developer Pack exists. -->
+    <TargetingClr2Framework>true</TargetingClr2Framework>
+    <_TargetFrameworkDirectories>$(MSBuildThisFileDirectory)</_TargetFrameworkDirectories>
+    <_FullFrameworkReferenceAssemblyPaths>$(MSBuildThisFileDirectory)</_FullFrameworkReferenceAssemblyPaths>
+
+    <!-- (2) Bridge restore until nano packages ship a netnano1.0 asset folder. -->
+    <AssetTargetFallback>$(AssetTargetFallback);net48</AssetTargetFallback>
+    <!-- The fallback is expected for now; don't fail the build on NU1701. -->
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
+  </PropertyGroup>
+
+</Project>

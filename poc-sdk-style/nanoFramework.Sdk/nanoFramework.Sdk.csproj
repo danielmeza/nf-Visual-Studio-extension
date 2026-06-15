@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Packaging-only project: produces the nanoFramework.Sdk MSBuild SDK package
+       (Sdk/Sdk.props + Sdk/Sdk.targets + supporting nano targets). It compiles
+       nothing of its own. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+
+    <PackageId>nanoFramework.Sdk</PackageId>
+    <Version>1.0.0</Version>
+    <PackageType>MSBuildSdk</PackageType>
+    <Authors>nanoFramework</Authors>
+    <Description>POC MSBuild project SDK for .NET nanoFramework. Composes over Microsoft.NET.Sdk and re-hosts the Metadata Processor PE stage. See poc-sdk-style/RESULTS.md.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="Sdk\**" Pack="true" PackagePath="Sdk\" />
+  </ItemGroup>
+
+</Project>

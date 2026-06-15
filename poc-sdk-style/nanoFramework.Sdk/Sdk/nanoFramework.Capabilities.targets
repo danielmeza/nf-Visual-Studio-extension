@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  nanoFramework.Capabilities.targets — CPS capability injection (WS2, doc 06 §6.2).
+
+  An SDK-style project (<Project Sdk="...">) is ALREADY a CPS project. What makes
+  the nanoFramework providers light up is the project carrying the unique
+  capability they key off:
+
+      DeployProvider               : [AppliesTo("NanoCSharpProject")]
+      NanoDebuggerLaunchProvider   : [AppliesTo("NanoCSharpProject")]
+      NanoCSharpProject{Un,}Configured.UniqueCapability == "NanoCSharpProject"
+
+  The legacy flavor declared this capability from NFProjectSystem.targets. Here we
+  declare it from the SDK so it is present on SDK-style projects WITHOUT re-owning
+  the legacy project-type GUID {11A8DD76-328B-46DF-9F39-F559912D0360}. This is the
+  whole of "(2) capability injection" in the hypothesis.
+
+  NOTE: declaring the capability is necessary but its EFFECT (VS loading the
+  project through CPS and instantiating the providers) can only be observed inside
+  Visual Studio on Windows — see RESULTS.md, WS2/WS4 runbook.
+-->
+<Project>
+
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETnanoFramework'">
+    <ProjectCapability Include="NanoCSharpProject" />
+  </ItemGroup>
+
+</Project>

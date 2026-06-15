@@ -1,0 +1,136 @@
+# POC pipeline — SDK-style nanoFramework build + headless debug-protocol test.
+#
+# Standalone and isolated: this does NOT replace the repo's azure-pipelines.yml.
+# It demonstrates the WS4 validation architecture from RESULTS.md:
+#
+#   Build      (any agent)        : pack the SDK, build the sample -> .pe/.pdbx,
+#                                   publish the harness. Proven cross-platform.
+#   Layer A    (windows-latest)   : run the SDK-built .pe on the `nanoclr` virtual
+#                                   device and assert load + execution headlessly.
+#                                   No interactive desktop needed.
+#   Layer B    (self-hosted)      : the literal VS F5 — needs an interactive
+#                                   Windows session, so it is gated off by default.
+#
+# Your Mac orchestrates this (az pipelines run) but cannot host VS or nanoclr.
+
+trigger: none            # run manually, or wire to the POC branch
+
+variables:
+  dotnetVersion: '10.0.x'
+  vmPort: 'COM30'        # nanoclr virtual serial port (Windows)
+  peDir: '$(Pipeline.Workspace)/pe'
+  harnessDir: '$(Pipeline.Workspace)/harness'
+
+stages:
+# ───────────────────────────────────────────────────────────────────────────
+- stage: Build
+  displayName: 'Build SDK + sample + harness'
+  jobs:
+  - job: build
+    displayName: 'dotnet build (cross-platform)'
+    pool:
+      vmImage: 'ubuntu-latest'      # build side is OS-agnostic (proven on macOS)
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        version: '$(dotnetVersion)'
+
+    - script: dotnet pack poc-sdk-style/nanoFramework.Sdk/nanoFramework.Sdk.csproj -c Release -o poc-sdk-style/local-feed
+      displayName: 'Pack nanoFramework.Sdk -> local feed'
+
+    - script: dotnet build poc-sdk-style/samples/Blink/Blink.csproj -c Debug
+      displayName: 'Build SDK-style sample (emits Blink.pe + .pdbx)'
+
+    - script: |
+        test -f poc-sdk-style/samples/Blink/bin/Debug/Blink.pe || { echo "##[error]Blink.pe not produced"; exit 1; }
+        head -c 6 poc-sdk-style/samples/Blink/bin/Debug/Blink.pe | grep -q NFMRK1 || { echo "##[error]not a nanoFramework PE"; exit 1; }
+      displayName: 'Assert a valid nanoFramework PE (NFMRK1)'
+
+    - script: dotnet publish poc-sdk-style/tools/NanoDebugProtocolTest/NanoDebugProtocolTest.csproj -c Release -o $(Build.ArtifactStagingDirectory)/harness
+      displayName: 'Publish the Layer A harness'
+
+    - publish: poc-sdk-style/samples/Blink/bin/Debug
+      artifact: pe
+      displayName: 'Publish PE artifact'
+
+    - publish: $(Build.ArtifactStagingDirectory)/harness
+      artifact: harness
+      displayName: 'Publish harness artifact'
+
+# ───────────────────────────────────────────────────────────────────────────
+- stage: LayerA_DebugProtocol
+  displayName: 'Layer A — headless debug-protocol test (nanoclr)'
+  dependsOn: Build
+  jobs:
+  - job: protocol
+    displayName: 'Deploy + run SDK PE on nanoclr virtual device'
+    pool:
+      vmImage: 'windows-latest'     # nanoclr + virtualserial are Windows-only
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        version: '$(dotnetVersion)'
+
+    - download: current
+      artifact: pe
+    - download: current
+      artifact: harness
+
+    - script: |
+        dotnet tool install --global nanoclr || dotnet tool update --global nanoclr
+        nanoclr --help
+      displayName: 'Install nanoclr (CLR Win32 virtual device)'
+
+    - script: nanoclr instance --update
+      displayName: 'Fetch latest nanoCLR instance image'
+
+    - script: nanoclr virtualserial --create $(vmPort)
+      displayName: 'Create virtual serial port $(vmPort)'
+
+    # Start the virtual device in the background, waiting for the debugger.
+    # NOTE (validate on first run): nanoclr's virtual serial pairing — whether the
+    # harness connects to $(vmPort) or its paired endpoint — follows `nanoclr
+    # virtualserial` semantics; the VS extension uses one configured port for both
+    # the instance and the client, mirrored here.
+    - powershell: |
+        Start-Process nanoclr -ArgumentList 'run --serialport $(vmPort) --waitfordebugger --loopafterexit' -WindowStyle Hidden
+        Start-Sleep -Seconds 3
+      displayName: 'Start nanoclr virtual device (background)'
+
+    - script: >
+        dotnet "$(harnessDir)/nano-debug-protocol-test.dll"
+        --port $(vmPort)
+        --pe "$(peDir)"
+        --expect Blink
+        --timeout 30
+      displayName: 'Run Layer A harness (gates the stage via exit code)'
+
+# ───────────────────────────────────────────────────────────────────────────
+- stage: LayerB_VsF5
+  displayName: 'Layer B — real VS F5 (self-hosted, interactive)'
+  dependsOn: Build
+  # Microsoft-hosted Windows agents run in Session 0 (no desktop) and cannot drive
+  # the VS debugger UI. Enable this only on a SELF-HOSTED Windows agent configured
+  # with autologon into an interactive session.
+  condition: false
+  jobs:
+  - job: vsf5
+    displayName: 'Open Blink.sln, set breakpoint, F5 against nanoclr'
+    pool:
+      name: 'self-hosted-windows-interactive'   # replace with your agent pool
+    steps:
+    - download: current
+      artifact: pe
+    # Outline (implement with your VSIX build + a DTE/Apex harness):
+    #   1. Install VS 2022 + the built nanoFramework VSIX + the SDK local feed.
+    #   2. Start the nanoclr virtual device (as in Layer A).
+    #   3. DTE automation:
+    #        dte.Solution.Open("Blink.sln")
+    #        dte.Debugger.Breakpoints.Add(File:="Program.cs", Line:=15)
+    #        dte.Debugger.Go(WaitForBreakOrEnd:=False)
+    #        wait until dte.Debugger.CurrentMode == dbgBreakMode  (timeout -> fail)
+    #        assert dte.Debugger.CurrentStackFrame is in Program.Main
+    #        dte.Debugger.Stop()
+    #   4. Or use the VS SDK integration-test harness (Apex).
+    - powershell: Write-Host "Layer B is documented; enable on a self-hosted interactive agent."
+      displayName: 'Layer B placeholder'

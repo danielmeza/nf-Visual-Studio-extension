@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  nanoFramework.Sdk — Sdk.props
+  Implicitly imported at the TOP of a project that declares
+  <Project Sdk="nanoFramework.Sdk/<version>">.
+
+  Strategy (doc 02 §2.3, option B): compose OVER Microsoft.NET.Sdk and override
+  the post-compile stage, rather than forking the SDK. We own the import chain so
+  the legacy NFProjectSystem.CSharp.targets double-import of
+  Microsoft.CSharp.CurrentVersion.targets (discussion #1635 / #1067) cannot occur.
+-->
+<Project>
+
+  <!-- Inherit Roslyn, restore, default globs and pack plumbing from the .NET SDK. -->
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+
+  <PropertyGroup Label="nanoFramework defaults">
+    <!-- Libraries by default; an app sets <OutputType>Exe</OutputType>. -->
+    <OutputType Condition="'$(OutputType)' == ''">Library</OutputType>
+    <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <LangVersion Condition="'$(LangVersion)' == ''">latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+
+    <!-- The on-device assembly is the .pe; the Roslyn .dll is a reference intermediate. -->
+    <NanoEmitPe Condition="'$(NanoEmitPe)' == ''">true</NanoEmitPe>
+
+    <!-- nanoFramework ships its own mscorlib subset; never pull the .NET ref packs. -->
+    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
+    <NoStdLib>true</NoStdLib>
+    <NoCompilerStandardLib>true</NoCompilerStandardLib>
+    <AddAdditionalExplicitAssemblyReferences>false</AddAdditionalExplicitAssemblyReferences>
+    <AutomaticallyUseReferenceAssemblyPackages>false</AutomaticallyUseReferenceAssemblyPackages>
+
+    <!-- nano corlib lacks the BCL attributes the SDK auto-AssemblyInfo would emit. -->
+    <GenerateAssemblyInfo Condition="'$(GenerateAssemblyInfo)' == ''">false</GenerateAssemblyInfo>
+
+    <!-- A portable PDB next to the IL assembly is what MDP turns into the .pdbx. -->
+    <DebugType Condition="'$(DebugType)' == ''">portable</DebugType>
+    <DebugSymbols Condition="'$(DebugSymbols)' == ''">true</DebugSymbols>
+
+    <!-- No RID, no apphost, no deps.json, no ref assembly — a nano build is target-agnostic. -->
+    <UseAppHost>false</UseAppHost>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <AppendTargetFrameworkToOutputPath Condition="'$(AppendTargetFrameworkToOutputPath)' == ''">false</AppendTargetFrameworkToOutputPath>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+
+  <!--
+    NOTE: the netnano1.0 moniker alignment + targeting-pack suppression live in
+    nanoFramework.Tfm.props, imported from Sdk.targets — NOT here. At Sdk.props
+    evaluation the project body has not yet set <TargetFramework>, so a
+    TargetFramework-conditional group here would silently no-op.
+  -->
+
+  <!--
+    Pull in the Metadata Processor task package so its DLL is on disk and a
+    $(Pkg...) path property is generated for the NanoEmitPe target. We consume
+    NONE of its assets (no transitive runtime/compile deps leak into the nano
+    assembly) — we only want the task binary path.
+  -->
+  <PropertyGroup>
+    <NanoMdpTaskPackageVersion Condition="'$(NanoMdpTaskPackageVersion)' == ''">3.0.100</NanoMdpTaskPackageVersion>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(NanoEmitPe)' == 'true' and '$(NanoMdpTaskAssembly)' == ''">
+    <PackageReference Include="nanoFramework.Tools.MetadataProcessor.MsBuildTask"
+                      Version="$(NanoMdpTaskPackageVersion)"
+                      GeneratePathProperty="true"
+                      PrivateAssets="all"
+                      IncludeAssets="none" />
+  </ItemGroup>
+
+</Project>

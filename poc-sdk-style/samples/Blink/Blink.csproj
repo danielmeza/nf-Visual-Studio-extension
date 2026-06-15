@@ -1,0 +1,14 @@
+<Project Sdk="nanoFramework.Sdk/1.0.0">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netnano1.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- v2 preview: this package is republished against netnano1.0 (ships
+         lib/netnano1.0/), so it restores natively with no AssetTargetFallback. -->
+    <PackageReference Include="nanoFramework.CoreLibrary" Version="2.0.0-preview.52" />
+  </ItemGroup>
+
+</Project>

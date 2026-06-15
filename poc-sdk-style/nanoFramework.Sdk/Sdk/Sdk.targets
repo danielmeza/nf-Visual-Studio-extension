@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  nanoFramework.Sdk — Sdk.targets
+  Implicitly imported at the BOTTOM of a project that declares
+  <Project Sdk="nanoFramework.Sdk/<version>">.
+
+  Ordering rule (doc 02 §2.3): we DEFINE our targets first, then import the .NET
+  SDK's Sdk.targets LAST so that CoreCompile / ResolveReferences / TargetDir etc.
+  exist. We never rely on import order for *execution* order — only for
+  *definition* availability. NanoEmitPe sequences itself via AfterTargets.
+-->
+<Project>
+
+  <!--
+    netnano1.0 moniker alignment + targeting-pack suppression. Imported HERE (not
+    from Sdk.props) because the project body has now set <TargetFramework>, so the
+    'netnano1.0' condition matches. It must also precede the Microsoft.NET.Sdk
+    bottom import so our _TargetFrameworkDirectories is in place before
+    GetReferenceAssemblyPaths would otherwise throw MSB3644.
+  -->
+  <Import Project="$(MSBuildThisFileDirectory)nanoFramework.Tfm.props" />
+
+  <!-- Our managed PE stage (defines NanoEmitPe; runs AfterTargets=CoreCompile). -->
+  <Import Project="$(MSBuildThisFileDirectory)nanoFramework.Mdp.targets" />
+
+  <!-- WS2: inject the NanoCSharpProject CPS capability so VS lights up Deploy/Debug. -->
+  <Import Project="$(MSBuildThisFileDirectory)nanoFramework.Capabilities.targets" />
+
+  <!-- Inherit the .NET SDK bottom import LAST. -->
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <!-- TargetDir / TargetName are now defined by Microsoft.Common.targets, so the
+       nano output-path defaults can finally resolve. NanoEmitPe consumes these. -->
+  <PropertyGroup>
+    <NanoPeOutputPath Condition="'$(NanoPeOutputPath)' == ''">$(TargetDir)$(TargetName).pe</NanoPeOutputPath>
+    <NanoPdbxOutputPath Condition="'$(NanoPdbxOutputPath)' == ''">$(TargetDir)$(TargetName).pdbx</NanoPdbxOutputPath>
+  </PropertyGroup>
+
+</Project>
