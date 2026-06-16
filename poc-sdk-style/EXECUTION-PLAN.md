@@ -9,14 +9,17 @@ Status of the POC itself: build + deploy + **F5/breakpoints proven on real hardw
 All clones live under `D:\src\nnf\`; each `origin` = a `danielmeza/*` fork, `upstream` =
 `nanoframework/*`. The `lib-*` fleet (doc 07) is intentionally **excluded** — later phase.
 
-| Repo | Role in the plan | Clone dir | Branch |
+Parity branch in every repo: **`move-to-sdk`** (the org's chosen name — already the SDK's
+branch and present in CoreLibrary upstream). All six forks have `origin/move-to-sdk`.
+
+| Repo | Role in the plan | Clone dir | `move-to-sdk` born from |
 |---|---|---|---|
-| **nanoFramework.NET.Sdk** | SDK contribution (A1–A4) | `nanoFramework.Sdk` | **`poc/vs-debugging-enablers`** (off `move-to-sdk`) |
-| **nf-Visual-Studio-extension** | extension fixes (B) | `nf-Visual-Studio-extension` | **`poc/sdk-style-debugging`** |
-| metadata-processor | MDP build task (A4, only if targeting v2) | `metadata-processor` | `main` |
-| CoreLibrary | corlib SDK-migration (special case) + validation | `nanoFramework-CoreLibrary` | `main` — fork keeps the **old** name; ~51 behind `upstream/CoreLibrary`, sync when tackling corlib |
-| Samples | end-to-end validation (deploy/debug a real app) | `Samples` | `main` |
-| nf-VSCodeExtension | consumer simplification (later phase) | `nf-VSCodeExtension` | `main` |
+| **nanoFramework.NET.Sdk** | SDK contribution (A1–A4) | `nanoFramework.Sdk` | the repo's dev branch (it *is* `move-to-sdk`; no `develop`) |
+| **nf-Visual-Studio-extension** | extension fixes (B) | `nf-Visual-Studio-extension` | `develop` — POC work stays on `poc/sdk-style-debugging` (kept for `#1784` permalinks), migrate over next |
+| metadata-processor | MDP build task (A4, only if v2) | `metadata-processor` | `develop` |
+| CoreLibrary | corlib migration + validation | `nanoFramework-CoreLibrary` | tracks the org's `upstream/move-to-sdk`; fork keeps the old name, ~51 behind |
+| Samples | end-to-end validation (deploy/debug a real app) | `Samples` | `main` (repo has no `develop`) |
+| nf-VSCodeExtension | consumer simplification (later phase) | `nf-VSCodeExtension` | `develop` |
 
 Baseline: the SDK's `nanoFramework.Tools.BuildTasks` builds clean (0 errors; only an
 NU1903 advisory on `Microsoft.Build.Utilities.Core`).
@@ -60,7 +63,8 @@ bundled build tasks; auto-injected MDP package (`3.0.29`).
 (The breakpoint fix is **entirely SDK-side** — A1. The engine reads the Windows PDB
 already; the POC's `[BP-DIAG]` was only diagnostics.)
 
-**Extension-side** (separate PR, already on `poc/sdk-style-debugging`):
+**Extension-side** (PR from the extension's `move-to-sdk`; the proven changes currently
+live on `poc/sdk-style-debugging` and migrate over, dropping `[BP-DIAG]`):
 
 | # | Change | File |
 |---|---|---|
@@ -71,7 +75,7 @@ already; the POC's `[BP-DIAG]` was only diagnostics.)
 
 ## Order of execution
 
-1. **A1–A3** in `nanoFramework.NET.Sdk` (`poc/vs-debugging-enablers`) — the debugging
+1. **A1–A3** in `nanoFramework.NET.Sdk` (`move-to-sdk`) — the debugging
    enablers. Small, additive, proven.
 2. **Validate**: pack the SDK; `test/SmokeTest` builds; then the SDK-style **Blink on a
    real ESP32 → deploy + F5 + breakpoint** (the POC's WS4) using the official SDK.
@@ -87,10 +91,10 @@ already; the POC's `[BP-DIAG]` was only diagnostics.)
 
 ## PR strategy
 
-- **SDK:** PR `danielmeza:poc/vs-debugging-enablers → nanoframework:move-to-sdk`. Title
+- **SDK:** PR `danielmeza:move-to-sdk → nanoframework:move-to-sdk`. Title
   e.g. *"Enable VS debugging for SDK-style projects (full PDB, F5 wiring)"*; link
   `Home#1784`, the POC `RESULTS.md`/`DEBUGGING-LOG.md`, and the demo (https://youtu.be/9qvXsgXCrjM).
-- **Extension:** PR `danielmeza:poc/sdk-style-debugging → nanoframework:develop` after
+- **Extension:** PR `danielmeza:move-to-sdk → nanoframework:develop` after
   stripping `[BP-DIAG]`; scope to B1–B2.
 
 ## Open questions for maintainers
